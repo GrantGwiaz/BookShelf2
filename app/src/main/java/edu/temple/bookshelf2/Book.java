@@ -7,6 +7,9 @@ public class Book implements Parcelable {
     private String title;
     private String author;
 
+    private String id;
+    private String coverURL;
+
     public Book(String title, String author) {
         this.title = title;
         this.author = author;
