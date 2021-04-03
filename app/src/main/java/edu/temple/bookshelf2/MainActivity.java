@@ -2,14 +2,25 @@ package edu.temple.bookshelf2;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.URL;
 
 public class MainActivity extends AppCompatActivity implements BookListFragment.BookSelectedInterface {
 
@@ -74,6 +85,10 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
                 Intent intent = new Intent(MainActivity.this, BookSearchActivity.class);
                 intent.setFlags(0);
                 startActivityForResult(intent, 1);
+                fm.beginTransaction()
+                        .replace(R.id.container1, BookListFragment.newInstance(bookList))
+                        .commit();
+
             }
         });
 
@@ -122,13 +137,63 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
 
             if(resultCode == RESULT_OK) {
                 Bundle extras = data.getExtras();
-                Bundle bundle = extras.getBundle("bundle");
-                BookList b = bundle.getParcelable("books");
-                //BookList b = extras.getParcelable("books");
-                //if(b.size() > 0) {
-                  //  s = b.get(1).getTitle();
-                //}
+                String json = extras.getString("JSON");
+                Thread t = new Thread() {
+                    @Override
+
+                    public void run() {
+                        super.run();
+                        try {
+                            URL url = new URL("https://kamorris.com/lab/cis3515/search.php?term=" + json);
+                            BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
+
+                            Message msg = Message.obtain();
+                            StringBuilder builder = new StringBuilder();
+                            String tmpString;
+                            while ((tmpString = reader.readLine()) != null) {
+                                builder.append(tmpString);
+                            }
+                            msg.obj = builder.toString();
+                            downloadHandler.sendMessage(msg);
+
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                };
+                t.start();
+                try {
+                    t.join();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+
+                }
             }
         }
     }
+
+    Handler downloadHandler =  new Handler(new Handler.Callback() {
+        @Override
+        public boolean handleMessage(@NonNull Message msg) {
+            try {
+                JSONArray bookListArray = new JSONArray((String) msg.obj);
+                BookList bl = new BookList();
+                for(int i = 0; i < bookListArray.length(); i++) {
+
+                    JSONObject bookObject = bookListArray.getJSONObject(i);
+                    Book b = new Book(
+                            bookObject.getString("id"),
+                            bookObject.getString("title"),
+                            bookObject.getString("author"),
+                            bookObject.getString("cover_url"));
+                    bl.add(b);
+                }
+                bookList = new BookList(bl);
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            return false;
+        }
+    });
 }

@@ -25,30 +25,7 @@ public class BookSearchActivity extends AppCompatActivity {
 
     volatile BookList books;
 
-    Handler downloadHandler =  new Handler(new Handler.Callback() {
-        @Override
-        public boolean handleMessage(@NonNull Message msg) {
-            try {
-                JSONArray bookListArray = new JSONArray((String) msg.obj);
-                BookList bl = new BookList();
-                for(int i = 0; i < bookListArray.length(); i++) {
 
-                    JSONObject bookObject = bookListArray.getJSONObject(i);
-                    Book b = new Book(
-                            bookObject.getString("id"),
-                            bookObject.getString("title"),
-                            bookObject.getString("author"),
-                            bookObject.getString("cover_url"));
-                    bl.add(b);
-                }
-                books = new BookList(bl);
-
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            return false;
-        }
-    });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,42 +39,8 @@ public class BookSearchActivity extends AppCompatActivity {
         goButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //books ;
-                Thread t = new Thread() {
-                    @Override
-
-                    public void run() {
-                        super.run();
-                        try {
-                            URL url = new URL("https://kamorris.com/lab/cis3515/search.php?term=" + editTextSearch.getText().toString());
-                            BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
-
-                            Message msg = Message.obtain();
-                            StringBuilder builder = new StringBuilder();
-                            String tmpString;
-                            while ((tmpString = reader.readLine()) != null) {
-                                builder.append(tmpString);
-                            }
-                            msg.obj = builder.toString();
-                            downloadHandler.sendMessage(msg);
-
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
-                };
-                t.start();
-                try {
-                    t.join();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-
-                }
-                Toast.makeText(BookSearchActivity.this, books.get(0).getTitle(), Toast.LENGTH_SHORT).show();
                 Intent intent = getIntent();
-                Bundle bundle = new Bundle();
-                bundle.putParcelable("books", books);
-                intent.putExtra("bundle", bundle);
+                intent.putExtra("JSON", editTextSearch.getText().toString());
                 setResult(Activity.RESULT_OK, intent);
                 finish();
             }
