@@ -12,6 +12,10 @@ public class BookList implements Parcelable {
         books = new ArrayList<>();
     }
 
+    public BookList(BookList another) {
+        this.books = another.books;
+    }
+
     protected BookList(Parcel in) {
         books = in.createTypedArrayList(Book.CREATOR);
     }

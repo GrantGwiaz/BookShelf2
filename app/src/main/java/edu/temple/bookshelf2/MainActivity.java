@@ -1,7 +1,12 @@
 package edu.temple.bookshelf2;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -14,6 +19,8 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
     BookDetailsFragment bookDetailsFragment;
     Book selectedBook;
     private final String KEY_SELECTED_BOOK = "selectedBook";
+
+    BookList bookList = new BookList();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,7 +44,7 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
             fm.popBackStack();
         } else if (!(fragment1 instanceof BookListFragment))
             fm.beginTransaction()
-                    .add(R.id.container1, BookListFragment.newInstance(getTestBooks()))
+                    .add(R.id.container1, BookListFragment.newInstance(bookList))
             .commit();
 
         /*
@@ -60,24 +67,23 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
                     .commit();
         }
 
+        Button search = (Button) findViewById(R.id.searchButton);
+        search.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, BookSearchActivity.class);
+                intent.setFlags(0);
+                startActivityForResult(intent, 1);
+            }
+        });
+
     }
 
-    /*
-    Generate an arbitrary list of "books" for testing
-     */
-    private BookList getTestBooks() {
-        BookList books = new BookList();
-        Book book;
-        for (int i = 1; i <= 10; i++) {
-            books.add(book = new Book("Book" + i, "Author" + i));
-        }
-        return books;
-    };
 
     @Override
     public void bookSelected(int index) {
         //Store the selected book to use later if activity restarts
-        selectedBook = getTestBooks().get(index);
+        selectedBook = bookList.get(index);
 
         if (twoPane)
             /*
@@ -107,5 +113,22 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
         // If the user hits the back button, clear the selected book
         selectedBook = null;
         super.onBackPressed();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode ==1) {
+
+            if(resultCode == RESULT_OK) {
+                Bundle extras = data.getExtras();
+                Bundle bundle = extras.getBundle("bundle");
+                BookList b = bundle.getParcelable("books");
+                //BookList b = extras.getParcelable("books");
+                //if(b.size() > 0) {
+                  //  s = b.get(1).getTitle();
+                //}
+            }
+        }
     }
 }

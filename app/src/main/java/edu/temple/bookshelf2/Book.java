@@ -10,9 +10,11 @@ public class Book implements Parcelable {
     private String id;
     private String coverURL;
 
-    public Book(String title, String author) {
+    public Book(String id, String title, String author, String coverURL) {
+        this.id = id;
         this.title = title;
         this.author = author;
+        this.coverURL = coverURL;
     }
 
     protected Book(Parcel in) {
