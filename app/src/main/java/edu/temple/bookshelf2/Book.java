@@ -7,6 +7,8 @@ public class Book implements Parcelable {
     private String title;
     private String author;
 
+
+
     private String id;
     private String coverURL;
 
@@ -48,6 +50,22 @@ public class Book implements Parcelable {
 
     public void setAuthor(String author) {
         this.author = author;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getCoverURL() {
+        return coverURL;
+    }
+
+    public void setCoverURL(String coverURL) {
+        this.coverURL = coverURL;
     }
 
     @Override

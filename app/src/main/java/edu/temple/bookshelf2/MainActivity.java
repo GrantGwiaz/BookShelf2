@@ -162,12 +162,6 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
                     }
                 };
                 t.start();
-                try {
-                    t.join();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-
-                }
             }
         }
     }
