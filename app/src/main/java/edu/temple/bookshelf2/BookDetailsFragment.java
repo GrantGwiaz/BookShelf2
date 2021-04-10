@@ -1,14 +1,14 @@
 package edu.temple.bookshelf2;
 
-import android.net.Uri;
 import android.os.Bundle;
+
+import androidx.fragment.app.Fragment;
+
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-
-import androidx.fragment.app.Fragment;
 
 import com.squareup.picasso.Picasso;
 
@@ -51,7 +51,7 @@ public class BookDetailsFragment extends Fragment {
 
         titleTextView = v.findViewById(R.id.titleTextView);
         authorTextView = v.findViewById(R.id.authorTextView);
-        coverImageView =  v.findViewById(R.id.BookCoverImageView);
+        coverImageView = v.findViewById(R.id.bookCoverImageView);
 
         /*
         Because this fragment can be created with or without
@@ -70,6 +70,6 @@ public class BookDetailsFragment extends Fragment {
     public void displayBook(Book book) {
         titleTextView.setText(book.getTitle());
         authorTextView.setText(book.getAuthor());
-        Picasso.get().load(Uri.parse(book.getCoverURL())).into(coverImageView);
+        Picasso.get().load(book.getCoverUrl()).into(coverImageView);
     }
 }

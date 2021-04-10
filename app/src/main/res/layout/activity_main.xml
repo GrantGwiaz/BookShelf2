@@ -7,31 +7,26 @@
     tools:context=".MainActivity">
 
     <FrameLayout
-        android:id="@+id/container1"
-        android:layout_width="381dp"
-        android:layout_height="638dp"
+        android:id="@+id/container_1"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/searchButton" />
+        app:layout_constraintTop_toBottomOf="@+id/searchDialogButton">
 
-    <Button
-        android:id="@+id/searchButton"
-        android:layout_width="353dp"
-        android:layout_height="51dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="16dp"
-        android:text="@string/search"
-        app:icon="@android:drawable/ic_menu_search"
-        app:iconGravity="textStart"
+    </FrameLayout>
+
+    <ImageButton
+        android:id="@+id/searchDialogButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@android:drawable/ic_menu_search" />
 </androidx.constraintlayout.widget.ConstraintLayout>

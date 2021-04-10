@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="edu.temple.bookshelf2">
+
     <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.BookShelf2">
-
-        <activity
-            android:name=".BookSearchActivity"
-            android:label="@string/title_activity_book_search"
-            android:theme="@style/Theme.AppCompat.Dialog"></activity>
+        android:theme="@style/AppTheme">
+        <activity android:name=".BookSearchActivity"
+            android:theme="@style/Theme.AppCompat.Dialog"
+            android:label="Search"></activity>
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

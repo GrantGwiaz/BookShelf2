@@ -8,12 +8,15 @@ import android.widget.BaseAdapter;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+
 public class BooksAdapter extends BaseAdapter {
 
     Context context;
     BookList books;
 
-    public BooksAdapter(Context context, BookList books) {
+    public BooksAdapter (Context context, BookList books) {
         this.context = context;
         this.books = books;
     }

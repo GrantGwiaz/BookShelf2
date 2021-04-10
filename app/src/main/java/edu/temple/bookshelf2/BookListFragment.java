@@ -2,13 +2,15 @@ package edu.temple.bookshelf2;
 
 import android.content.Context;
 import android.os.Bundle;
+
+import androidx.fragment.app.Fragment;
+
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.BaseAdapter;
 import android.widget.ListView;
-
-import androidx.fragment.app.Fragment;
 
 public class BookListFragment extends Fragment {
 
@@ -16,6 +18,7 @@ public class BookListFragment extends Fragment {
     private BookList books;
 
     BookSelectedInterface parentActivity;
+    ListView listView;
 
     public BookListFragment() {}
 
@@ -59,7 +62,7 @@ public class BookListFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        ListView listView = (ListView) inflater.inflate(R.layout.fragment_book_list, container, false);
+        listView = (ListView) inflater.inflate(R.layout.fragment_book_list, container, false);
 
         listView.setAdapter(new BooksAdapter(getContext(), books));
 
@@ -72,6 +75,11 @@ public class BookListFragment extends Fragment {
 
         return listView;
     }
+
+    public void showNewBooks() {
+        ((BaseAdapter) listView.getAdapter()).notifyDataSetChanged();
+    }
+
 
     /*
     Interface for communicating with attached activity

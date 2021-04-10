@@ -4,24 +4,24 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 public class Book implements Parcelable {
+
+    private int id;
     private String title;
     private String author;
+    private String coverUrl;
 
-
-
-    private String id;
-    private String coverURL;
-
-    public Book(String id, String title, String author, String coverURL) {
+    public Book(int id, String title, String author, String coverUrl) {
         this.id = id;
         this.title = title;
         this.author = author;
-        this.coverURL = coverURL;
+        this.coverUrl = coverUrl;
     }
 
     protected Book(Parcel in) {
+        id = in.readInt();
         title = in.readString();
         author = in.readString();
+        coverUrl = in.readString();
     }
 
     public static final Creator<Book> CREATOR = new Creator<Book>() {
@@ -35,6 +35,14 @@ public class Book implements Parcelable {
             return new Book[size];
         }
     };
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
 
     public String getTitle() {
         return title;
@@ -52,21 +60,14 @@ public class Book implements Parcelable {
         this.author = author;
     }
 
-    public String getId() {
-        return id;
+    public String getCoverUrl() {
+        return coverUrl;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setCoverUrl(String coverUrl) {
+        this.coverUrl = coverUrl;
     }
 
-    public String getCoverURL() {
-        return coverURL;
-    }
-
-    public void setCoverURL(String coverURL) {
-        this.coverURL = coverURL;
-    }
 
     @Override
     public int describeContents() {
@@ -75,7 +76,9 @@ public class Book implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel parcel, int i) {
+        parcel.writeInt(id);
         parcel.writeString(title);
         parcel.writeString(author);
+        parcel.writeString(coverUrl);
     }
 }
