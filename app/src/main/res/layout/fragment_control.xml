@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/frameLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ControlFragment" >
+
+    <ImageButton
+        android:id="@+id/PauseImageButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:src="@android:drawable/ic_media_pause"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/NowPlayingtextView" />
+
+    <ImageButton
+        android:id="@+id/PlayImageButton"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_marginStart="28dp"
+        android:src="@android:drawable/ic_media_play"
+        app:layout_constraintStart_toEndOf="@+id/PauseImageButton"
+        app:layout_constraintTop_toTopOf="@+id/PauseImageButton" />
+
+    <ImageButton
+        android:id="@+id/StopImageButton"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_marginStart="48dp"
+        android:src="@android:drawable/picture_frame"
+        app:layout_constraintBottom_toBottomOf="@+id/PlayImageButton"
+        app:layout_constraintStart_toEndOf="@+id/PlayImageButton"
+        app:layout_constraintTop_toTopOf="@+id/PlayImageButton" />
+
+    <TextView
+        android:id="@+id/NowPlayingtextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="testText"
+        android:textAlignment="center"
+        app:layout_constraintEnd_toEndOf="@+id/StopImageButton"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/PauseImageButton"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <SeekBar
+        android:id="@+id/ProgressSeekBar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintEnd_toEndOf="@+id/StopImageButton"
+        app:layout_constraintStart_toStartOf="@+id/PauseImageButton"
+        app:layout_constraintTop_toBottomOf="@+id/PauseImageButton" />
+</androidx.constraintlayout.widget.ConstraintLayout>

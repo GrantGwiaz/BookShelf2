@@ -52,6 +52,9 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
 
         fm = getSupportFragmentManager();
 
+        Fragment fragment3;
+        fragment3 = fm.findFragmentById(R.id.container_3);
+
         Fragment fragment1;
         fragment1 = fm.findFragmentById(R.id.container_1);
 
