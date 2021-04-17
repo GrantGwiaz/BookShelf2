@@ -1,5 +1,6 @@
 package edu.temple.bookshelf2;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
@@ -9,7 +10,9 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.view.View;
 import android.widget.SeekBar;
 import android.widget.Toast;
@@ -24,6 +27,7 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
     BookDetailsFragment bookDetailsFragment;
     ControlFragment controlFragment;
     Book selectedBook;
+    int duration;
 
     private final String TAG_BOOKLIST = "booklist", TAG_BOOKDETAILS = "bookdetails", TAG_CONTROL = "control";
     private final String KEY_SELECTED_BOOK = "selectedBook";
@@ -32,8 +36,25 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
 
     BookList bookList;
 
+    Intent serviceIntent;
     AudiobookService.MediaControlBinder mediaControlBinder;
     boolean isConnected;
+
+    boolean pauseUpdate;
+
+
+    Handler messageHandler = new Handler(new Handler.Callback() {
+        @Override
+        public boolean handleMessage(@NonNull Message msg) {
+            if(mediaControlBinder.isPlaying() && !pauseUpdate) {
+                AudiobookService.BookProgress bookProgress = (AudiobookService.BookProgress) msg.obj;
+                    double d = bookProgress.getProgress();
+                    d = 100 * d / duration;
+                    ((SeekBar) findViewById(R.id.ProgressSeekBar)).setProgress((int) Math.round(d));
+            }
+            return true;
+        }
+    });
 
     ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
@@ -53,8 +74,10 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Intent serviceIntent = new Intent(MainActivity.this, AudiobookService.class);
+        serviceIntent = new Intent(MainActivity.this, AudiobookService.class);
+        startService(serviceIntent);
         bindService(serviceIntent, serviceConnection, BIND_AUTO_CREATE);
+
 
         findViewById(R.id.searchDialogButton).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -82,10 +105,11 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
         fragment3 = fm.findFragmentById(R.id.container_3);
 
         // add the control fragment
-        fm.beginTransaction()
-                .add(R.id.container_3, ControlFragment.newInstance(null, -1, -1), TAG_CONTROL)
-                .commit();
-
+        if(controlFragment == null) {
+            fm.beginTransaction()
+                    .add(R.id.container_3, ControlFragment.newInstance(null, -1, -1), TAG_CONTROL)
+                    .commit();
+        }
         Fragment fragment1;
         fragment1 = fm.findFragmentById(R.id.container_1);
 
@@ -124,8 +148,9 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
     @Override
     public void bookSelected(int index) {
         // Store the selected book to use later if activity restarts
+        mediaControlBinder.setProgressHandler(messageHandler);
         selectedBook = bookList.get(index);
-
+        duration = selectedBook.getDuration();
         if (twoPane)
             /*
             Display selected book using previously attached fragment
@@ -186,22 +211,34 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        unbindService(serviceConnection);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        bindService(serviceIntent, serviceConnection, BIND_AUTO_CREATE);
+    }
+
+    @Override
     public void play() {
-        if (isConnected) {
+        if (isConnected && selectedBook !=null) {
             mediaControlBinder.play(selectedBook.getId());
         }
     }
 
     @Override
     public void pause() {
-        if (isConnected) {
+        if (isConnected && selectedBook != null) {
             mediaControlBinder.pause();
         }
     }
 
     @Override
     public void stop() {
-        if (isConnected) {
+        if (isConnected && selectedBook != null) {
             mediaControlBinder.stop();
             ((SeekBar) findViewById(R.id.ProgressSeekBar)).setProgress(0);
         }
@@ -209,9 +246,8 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
 
     @Override
     public int seekChange(int newProgress) {
-        if (isConnected) {
+        if (isConnected && selectedBook != null) {
             mediaControlBinder.seekTo(newProgress);
-            ((SeekBar) findViewById(R.id.ProgressSeekBar)).setProgress(newProgress);
             return newProgress;
         } else {
             return -1;
@@ -220,10 +256,15 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
 
     @Override
     public boolean isPlaying() {
-        if (isConnected) {
+        if (isConnected && selectedBook != null) {
             return mediaControlBinder.isPlaying();
         }
         return false;
+    }
+
+    @Override
+    public boolean setPauseUpdate(boolean p) {
+        return p;
     }
 
 }

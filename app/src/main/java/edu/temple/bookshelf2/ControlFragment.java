@@ -3,8 +3,11 @@ package edu.temple.bookshelf2;
 import android.content.Context;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
+import android.os.Handler;
+import android.os.Message;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,12 +23,14 @@ public class ControlFragment extends Fragment {
     private String playing;
     private int curProgress;
     private int duration;
+    private boolean started;
 
     ImageButton pause, play, stop;
     TextView nowPlaying;
     SeekBar progressBar;
 
     MediaActionInterface parentActivity;
+
 
 
     public ControlFragment() {}
@@ -80,8 +85,7 @@ public class ControlFragment extends Fragment {
 
         progressBar.setMin(0);
         progressBar.setMax(100);
-        progressBar.setProgress(0);
-
+        /*
         if(playing != null && duration != -1) {
             nowPlaying.setText(getString(R.string.playing) + playing);
             if(curProgress != -1) {
@@ -91,11 +95,13 @@ public class ControlFragment extends Fragment {
             }
         }
 
+         */
+
         pause.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                if(!parentActivity.isPlaying()) {
+                if(parentActivity.isPlaying()) {
                     parentActivity.pause();
                 }
             }
@@ -105,8 +111,9 @@ public class ControlFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 if(!parentActivity.isPlaying()) {
-                    if(curProgress == 0) {
+                    if(!started) {
                         parentActivity.play();
+                        started = true;
                     } else {
                         parentActivity.pause();
                     }
@@ -117,28 +124,33 @@ public class ControlFragment extends Fragment {
         stop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                started = false;
                 parentActivity.stop();
             }
         });
 
         progressBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            int changedProg;
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if(fromUser) {
-                    double p = progress;
-                    p = p*(curProgress)/100;
-                    parentActivity.seekChange((int) Math.round(p));
+                    parentActivity.setPauseUpdate(true);
+                    changedProg =progress;
                 }
             }
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
 
+                parentActivity.setPauseUpdate(true);
             }
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-
+                parentActivity.setPauseUpdate(false);
+                double p = changedProg;
+                p = p * (curProgress) / 100;
+                parentActivity.seekChange((int) Math.round(p));
             }
         });
 
@@ -147,6 +159,15 @@ public class ControlFragment extends Fragment {
         return v;
     }
 
+    int getDuration() {
+        return duration;
+    }
+
+    boolean getStarted() {
+        return started;
+    }
+
+
 
     interface MediaActionInterface {
         void play();
@@ -154,6 +175,7 @@ public class ControlFragment extends Fragment {
         void stop();
         int seekChange(int newProgress);
         public boolean isPlaying();
+        boolean setPauseUpdate(boolean p);
     }
 
 }
