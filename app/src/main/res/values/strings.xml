@@ -7,4 +7,6 @@
     <string name="error_no_results">No books matched your search</string>
     <string name="form_search">Search</string>
     <string name="form_cancel">Cancel</string>
+    <string name="playing">Now Playing: </string>
+
 </resources>
