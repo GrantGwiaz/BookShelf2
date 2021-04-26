@@ -3,9 +3,10 @@ package edu.temple.bookshelf2;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class BookList implements Parcelable {
+public class BookList implements Parcelable, Serializable {
     private ArrayList<Book> books;
 
     public BookList() {

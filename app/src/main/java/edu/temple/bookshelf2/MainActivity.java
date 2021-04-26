@@ -7,8 +7,10 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -16,6 +18,12 @@ import android.os.Message;
 import android.view.View;
 import android.widget.SeekBar;
 import android.widget.Toast;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
 import edu.temple.audiobookplayer.AudiobookService;
 
@@ -40,6 +48,12 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
     Intent serviceIntent;
 
     BookList bookList;
+
+
+    String savedStateFilename = "savedStatefile";
+    File savedStateFile;
+
+    boolean dialog = false;
 
 
     Handler progressHandler = new Handler(new Handler.Callback() {
@@ -72,6 +86,34 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        savedStateFile = new File(getFilesDir(), savedStateFilename);
+
+        if(!dialog) {
+            if (savedStateFile.exists()) {
+                try {
+                    SavedState saved;
+                    FileInputStream fin = openFileInput(savedStateFilename);
+                    ObjectInputStream oin = new ObjectInputStream(fin);
+                    saved = (SavedState) oin.readObject();
+                    oin.close();
+
+                    selectedBook =saved.getSelectedBook();
+                    playingBook =saved.getPlayingBook();
+                    bookList = saved.getCurrentList();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+            }
+            dialog =false;
+        }
+        else{
+            Toast.makeText(this,"Hello FFFFart",Toast.LENGTH_SHORT).show();
+        }
+
+
+
+
         serviceIntent = new Intent(this, AudiobookService.class);
         bindService(serviceIntent, serviceConnection, BIND_AUTO_CREATE);
 
@@ -80,22 +122,25 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
         findViewById(R.id.searchDialogButton).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                dialog = true;
                 startActivityForResult(new Intent(MainActivity.this, BookSearchActivity.class), BOOK_SEARCH_REQUEST_CODE);
             }
         });
 
         if (savedInstanceState != null) {
             // Fetch selected book if there was one
-            selectedBook = savedInstanceState.getParcelable(KEY_SELECTED_BOOK);
+            selectedBook =  savedInstanceState.getParcelable(KEY_SELECTED_BOOK);
 
             // Fetch playing book if there is one
-            playingBook = savedInstanceState.getParcelable(KEY_PLAYING_BOOK);
+            playingBook =   savedInstanceState.getParcelable(KEY_PLAYING_BOOK);
 
             // Fetch previously searched books if one was previously retrieved
-            bookList = savedInstanceState.getParcelable(KEY_BOOKLIST);
+            bookList =  savedInstanceState.getParcelable(KEY_BOOKLIST);
         } else {
             // Create empty booklist if
-            bookList = new BookList();
+            if( bookList == null) {
+                bookList = new BookList();
+            }
         }
 
         twoPane = findViewById(R.id.container2) != null;
@@ -162,6 +207,7 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
                     .addToBackStack(null)
                     .commit();
         }
+
     }
 
     /**
@@ -195,12 +241,48 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
 
         if (requestCode == BOOK_SEARCH_REQUEST_CODE && resultCode == RESULT_OK) {
             bookList.clear();
-            bookList.addAll((BookList) data.getParcelableExtra(BookSearchActivity.BOOKLIST_KEY));
+            bookList.addAll( data.getParcelableExtra(BookSearchActivity.BOOKLIST_KEY));
             if (bookList.size() == 0) {
                 Toast.makeText(this, getString(R.string.error_no_results), Toast.LENGTH_SHORT).show();
             }
             showNewBooks();
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // here we are going to restore the selectedBook, playingBook, and bookList from internal memory
+
+        // might have to put file = new File(getFilesDir(), internalFilename); maybe not ttho
+        //restore from file
+
+        //fromPause =false;
+
+        // TODO update fragments
+
+
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        SavedState saved = new SavedState(selectedBook, playingBook, bookList);
+        try{
+            FileOutputStream fos = openFileOutput(savedStateFilename, Context.MODE_PRIVATE);
+            ObjectOutputStream oos = new ObjectOutputStream(fos);
+            oos.writeObject(saved);
+            oos.close();
+        }
+        catch( Exception e) {
+            e.printStackTrace();
+        }
+        //fromPause =true;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     @Override
@@ -214,6 +296,7 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
             // ensures that the service doesn't stop
             // if the activity is destroyed while the book is playing
             startService(serviceIntent);
+
         }
     }
 
@@ -222,6 +305,7 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
         if (sericeConnected) {
             mediaControlBinder.pause();
         }
+
     }
 
     @Override

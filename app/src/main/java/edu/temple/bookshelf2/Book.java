@@ -3,7 +3,9 @@ package edu.temple.bookshelf2;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-public class Book implements Parcelable {
+import java.io.Serializable;
+
+public class Book implements Parcelable, Serializable {
 
     private int id;
     private String title;

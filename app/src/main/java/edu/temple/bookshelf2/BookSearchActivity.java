@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -43,7 +44,7 @@ public class BookSearchActivity extends AppCompatActivity {
                         Intent resultIntent = new Intent();
 
                         // Return retrieved books to calling activity
-                        resultIntent.putExtra(BOOKLIST_KEY, getBookListFromJsonArray(response));
+                        resultIntent.putExtra(BOOKLIST_KEY, (Parcelable) getBookListFromJsonArray(response));
                         setResult(RESULT_OK, resultIntent);
                         finish();
                     }
