@@ -304,7 +304,9 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
         super.onResume();
         restoreProgress();
         seekChange(progress);
-        controlFragment.setNowPlaying("Now Playing: " + playingBook.getTitle());
+        if(playingBook != null) {
+            controlFragment.setNowPlaying("Now Playing: " + playingBook.getTitle());
+        }
         dialog = false;
     }
 
