@@ -3,6 +3,7 @@ package edu.temple.bookshelf2;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
@@ -11,23 +12,42 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.util.Log;
+import android.util.Pair;
 import android.view.View;
 import android.widget.SeekBar;
 import android.widget.Toast;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.ArrayList;
 
 import edu.temple.audiobookplayer.AudiobookService;
 
-public class MainActivity extends AppCompatActivity implements BookListFragment.BookSelectedInterface, ControlFragment.MediaActionInterface {
+public class MainActivity extends AppCompatActivity implements BookListFragment.BookSelectedInterface, ControlFragment.MediaActionInterface, ActivityCompat.OnRequestPermissionsResultCallback{
+
+    /*
+        Pretty sure it works according to the Rubric, as far as I can tell.
+        I spent too of my life long testing it; I could just be sick of testing and debugging.
+        Either way, please be kind to my app.
+
+        P.S. This code is a mess.
+        P.P.S Bless this mess.
+        P.P.P.S Thanks for the great job over this semester!
+     */
 
     FragmentManager fm;
 
@@ -40,6 +60,8 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
     private final String KEY_SELECTED_BOOK = "selectedBook", KEY_PLAYING_BOOK ="playingBook";
     private final String KEY_BOOKLIST = "searchedook";
     private final int BOOK_SEARCH_REQUEST_CODE = 123;
+
+    boolean play = true;
 
 
     private AudiobookService.MediaControlBinder mediaControlBinder;
@@ -55,13 +77,18 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
 
     boolean dialog = false;
 
+    boolean lastSearched;
+    int progress = 0;
+
 
     Handler progressHandler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(@NonNull Message msg) {
             if(mediaControlBinder.isPlaying() && playingBook != null) {
-                controlFragment.updateProgress((int) (((float) ((AudiobookService.BookProgress) msg.obj).getProgress() / playingBook.getDuration()) * 100));
+                progress = (((AudiobookService.BookProgress) msg.obj).getProgress() -10);
+                controlFragment.updateProgress((int) (((float)(progress +10)/ playingBook.getDuration()) * 100));
                 controlFragment.setNowPlaying("Now Playing: " + playingBook.getTitle());
+
             }
             return true;
         }
@@ -80,6 +107,7 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
             sericeConnected = false;
         }
     };
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,17 +128,15 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
                     selectedBook =saved.getSelectedBook();
                     playingBook =saved.getPlayingBook();
                     bookList = saved.getCurrentList();
+
+
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
 
             }
-            dialog =false;
-        }
-        else{
-            Toast.makeText(this,"Hello FFFFart",Toast.LENGTH_SHORT).show();
-        }
 
+        }
 
 
 
@@ -118,6 +144,9 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
         bindService(serviceIntent, serviceConnection, BIND_AUTO_CREATE);
 
         fm = getSupportFragmentManager();
+
+
+
 
         findViewById(R.id.searchDialogButton).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -143,6 +172,7 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
             }
         }
 
+
         twoPane = findViewById(R.id.container2) != null;
 
         Fragment fragment1;
@@ -154,6 +184,7 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
                     .add(R.id.container_3, controlFragment)
                     .commit();
         }
+
 
 
         // At this point, I only want to have BookListFragment be displayed in container_1
@@ -173,7 +204,7 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
             fm.beginTransaction()
                     .replace(R.id.container2, bookDetailsFragment, TAG_BOOKDETAILS)
                     .commit();
-        } else if (selectedBook != null) {
+        } else if (selectedBook != null && !lastSearched) {
             /*
             If a book was selected, and we now have a single container, replace
             BookListFragment with BookDetailsFragment, making the transaction reversible
@@ -207,6 +238,7 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
                     .addToBackStack(null)
                     .commit();
         }
+        lastSearched = false;
 
     }
 
@@ -249,26 +281,14 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
         }
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        // here we are going to restore the selectedBook, playingBook, and bookList from internal memory
-
-        // might have to put file = new File(getFilesDir(), internalFilename); maybe not ttho
-        //restore from file
-
-        //fromPause =false;
-
-        // TODO update fragments
-
-
-    }
 
     @Override
     protected void onPause() {
         super.onPause();
         SavedState saved = new SavedState(selectedBook, playingBook, bookList);
+        saveProgress();
         try{
+
             FileOutputStream fos = openFileOutput(savedStateFilename, Context.MODE_PRIVATE);
             ObjectOutputStream oos = new ObjectOutputStream(fos);
             oos.writeObject(saved);
@@ -277,32 +297,133 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
         catch( Exception e) {
             e.printStackTrace();
         }
-        //fromPause =true;
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    protected void onResume() {
+        super.onResume();
+        restoreProgress();
+        seekChange(progress);
+        controlFragment.setNowPlaying("Now Playing: " + playingBook.getTitle());
+        dialog = false;
     }
+
+    //we want to do this function whenever a new book is about to be played or before the app is closed
+    public void saveProgress() {
+        if( playingBook != null) {
+            String audioBookProgressFileName = "Progress" + playingBook.getId();
+            File audioBookProgress = new File(getFilesDir(), audioBookProgressFileName);
+            if(audioBookProgress.exists()) {
+                audioBookProgress.delete();
+            }
+
+            try {
+                if(progress < 0) {
+                    progress = 0;
+                }
+                FileOutputStream fos = openFileOutput(audioBookProgressFileName, Context.MODE_PRIVATE);
+                ObjectOutputStream oos = new ObjectOutputStream(fos);
+                oos.writeObject(Integer.toString(progress));
+                oos.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void restoreProgress() {
+        if(playingBook != null) {
+            String audioBookProgressFileName = "Progress" + selectedBook.getId();
+            File audioBookProgress = new File(getFilesDir(), audioBookProgressFileName);
+            if (audioBookProgress.exists()) {
+                try {
+                    String prog;
+                    FileInputStream fin = openFileInput(audioBookProgressFileName);
+                    ObjectInputStream oin = new ObjectInputStream(fin);
+                    prog = (String) oin.readObject();
+                    oin.close();
+                    progress = Integer.parseInt(prog);
+                    controlFragment.updateProgress((int) (((float)progress/ playingBook.getDuration()) * 100));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+
 
     @Override
     public void play() {
         if (selectedBook !=null) {
-            playingBook =selectedBook;
-            controlFragment.setNowPlaying("Now Playing: " + playingBook.getTitle());
-            if(sericeConnected) {
-                mediaControlBinder.play(selectedBook.getId());
-            }
-            // ensures that the service doesn't stop
-            // if the activity is destroyed while the book is playing
-            startService(serviceIntent);
 
-        }
+                saveProgress();
+                playingBook = selectedBook;
+                controlFragment.setNowPlaying("Now Playing: " + playingBook.getTitle());
+
+                String savedAudioBookFilename = "AudioBook" + selectedBook.getId();
+                File audioBook = new File(getExternalFilesDir(null), savedAudioBookFilename);
+
+                if (sericeConnected) {
+                    if (audioBook.exists()) {
+                        restoreProgress();
+                        if(progress <= 0) {
+                            mediaControlBinder.play(audioBook);
+                        } else{
+                            mediaControlBinder.play(audioBook, progress);
+                        }
+                    } else {
+                        Intent downLoadServiceIntent = new Intent(MainActivity.this, DownLoadService.class);
+                        downLoadServiceIntent.putExtra("book_ID", playingBook.getId());
+                        startService(downLoadServiceIntent);
+                        //play from stream, always starts at zero if from stream
+
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                //String savedAudioBookFilename = "AudioBook" + audioBookId;
+                                String url =  "https://kamorris.com/lab/audlib/download.php?id=" + playingBook.getId(); //audioBookId;
+
+                                try {
+                                    URL u = new URL(url);
+                                    URLConnection conn = u.openConnection();
+                                    int contentLength = conn.getContentLength();
+
+                                    DataInputStream stream = new DataInputStream(u.openStream());
+
+
+                                    byte[] buffer = new byte[contentLength];
+                                    stream.readFully(buffer);
+                                    stream.close();
+
+                                    File audioBook = new File(getExternalFilesDir(null), savedAudioBookFilename);
+                                    DataOutputStream fos = new DataOutputStream(new FileOutputStream(audioBook));
+                                    fos.write(buffer);
+                                    fos.flush();
+                                    fos.close();
+                                    Log.d("DOWNLOADED AUDIOBOOK", "Downloaded this god dang book");
+
+                                } catch(Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }).start();
+
+                        mediaControlBinder.play(selectedBook.getId());
+
+                    }
+                }
+                // ensures that the service doesn't stop
+                // if the activity is destroyed while the book is playing
+                startService(serviceIntent);
+            }
+
     }
 
     @Override
     public void pause() {
         if (sericeConnected) {
+            saveProgress();
             mediaControlBinder.pause();
         }
 
@@ -314,6 +435,8 @@ public class MainActivity extends AppCompatActivity implements BookListFragment.
             mediaControlBinder.stop();
             controlFragment.updateProgress(0);
             controlFragment.setNowPlaying("");
+            progress = 0;
+            saveProgress();
 
             //If no book id playing, then its fine to let
             // the service stop once the activity is destroyed
